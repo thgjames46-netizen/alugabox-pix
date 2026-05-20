@@ -40,4 +40,24 @@
                 if (data.qr_code_base64) {
                     document.getElementById('qrcode').innerHTML = `<img src="data:image/png;base64,${data.qr_code_base64}">`;
                     document.getElementById('copiaCola').innerText = data.qr_code;
-                    document
+                    document.getElementById('resultado').style.display = 'block';
+                    btn.style.display = 'none';
+                } else {
+                    alert('Erro ao gerar PIX: ' + (data.error || 'Erro desconhecido'));
+                    btn.disabled = false;
+                    btn.innerText = 'Alugar Agora - R$ 5,00';
+                }
+            } catch (error) {
+                alert('Erro de conexão com o servidor');
+                btn.disabled = false;
+                btn.innerText = 'Alugar Agora - R$ 5,00';
+            }
+        }
+        function copiar() {
+            const texto = document.getElementById('copiaCola').innerText;
+            navigator.clipboard.writeText(texto);
+            alert('Código PIX copiado!');
+        }
+    </script>
+</body>
+</html>
