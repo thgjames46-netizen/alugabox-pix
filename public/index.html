@@ -1,22 +1,43 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AlugaBox PIX</title>
     <style>
-        body { font-family: Arial; text-align: center; padding: 50px; background: #0d1117; color: white; }
-        h1 { color: #00d4ff; }
-        .box { background: #161b22; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; }
-        button { background: #00d4ff; color: #000; border: none; padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+        body { background: #121212; color: #fff; font-family: Arial; text-align: center; padding: 50px 20px; }
+        h1 { color: #00a884; }
+        button { background: #00a884; color: #fff; border: none; padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; margin: 20px 0; }
+        button:disabled { background: #555; }
+        #qrcode { margin-top: 20px; }
+        #qrcode img { max-width: 250px; border: 5px solid #fff; border-radius: 8px; }
+        #copiaCola { background: #222; padding: 10px; border-radius: 8px; word-break: break-all; margin: 20px auto; max-width: 500px; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h1>AlugaBox PIX</h1>
-        <p>Alugue sua box em segundos</p>
-        <button onclick="alert('Backend pronto! Próximo passo: conectar Mercado Pago')">Alugar Agora</button>
+    <h1>AlugaBox PIX</h1>
+    <p>Alugue sua box em segundos</p>
+    <button id="btnAlugar" onclick="gerarPix()">Alugar Agora - R$ 5,00</button>
+    <div id="resultado" style="display:none;">
+        <h3>Pague com PIX:</h3>
+        <div id="qrcode"></div>
+        <p><strong>PIX Copia e Cola:</strong></p>
+        <div id="copiaCola"></div>
+        <button onclick="copiar()">Copiar Código</button>
     </div>
-</body>
-</html>
-
+    <script>
+        async function gerarPix() {
+            const btn = document.getElementById('btnAlugar');
+            btn.disabled = true;
+            btn.innerText = 'Gerando PIX...';
+            try {
+                const response = await fetch('/gerar-pix', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ valor: 5 })
+                });
+                const data = await response.json();
+                if (data.qr_code_base64) {
+                    document.getElementById('qrcode').innerHTML = `<img src="data:image/png;base64,${data.qr_code_base64}">`;
+                    document.getElementById('copiaCola').innerText = data.qr_code;
+                    document
