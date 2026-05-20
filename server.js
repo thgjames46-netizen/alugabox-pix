@@ -1,23 +1,25 @@
 const express = require("express");
 const cors = require("cors");
-const mercadopago = require("mercadopago");
+const { MercadoPagoConfig, Payment } = require("mercadopago");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-mercadopago.configure({
-  access_token: process.env.MP_ACCESS_TOKEN
+// CONFIG NOVO DA VERSÃO 2.0
+const client = new MercadoPagoConfig({ 
+  accessToken: process.env.MP_ACCESS_TOKEN 
 });
 
 const dispositivosPagos = {};
 
-// GERA PIX VIA API DO MP - AGORA MANDA WEBHOOK
+// GERA PIX VIA API - VERSÃO 2.0
 app.get("/pagar/:deviceId", async (req, res) => {
   const deviceId = req.params.deviceId;
   
   try {
-    const payment_data = {
+    const payment = new Payment(client);
+    const body = {
       transaction_amount: 10,
       description: `Aluguel AlugaBox - ${deviceId}`,
       payment_method_id: "pix",
@@ -25,9 +27,9 @@ app.get("/pagar/:deviceId", async (req, res) => {
       payer: { email: "cliente@teste.com" }
     };
 
-    const payment = await mercadopago.payment.create(payment_data);
-    const qr_code = payment.body.point_of_interaction.transaction_data.qr_code;
-    const qr_code_base64 = payment.body.point_of_interaction.transaction_data.qr_code_base64;
+    const result = await payment.create({ body });
+    const qr_code = result.point_of_interaction.transaction_data.qr_code;
+    const qr_code_base64 = result.point_of_interaction.transaction_data.qr_code_base64;
 
     res.send(`
       <h1>AlugaBox - Pague R$ 10,00</h1>
@@ -42,7 +44,7 @@ app.get("/pagar/:deviceId", async (req, res) => {
   }
 });
 
-// WEBHOOK QUE RECEBE DO MP E LIBERA
+// WEBHOOK - VERSÃO 2.0
 app.post("/webhook/pix", async (req, res) => {
   console.log("POST /webhook/pix");
   const payment_id = req.body.data?.id;
@@ -50,9 +52,11 @@ app.post("/webhook/pix", async (req, res) => {
   if (!payment_id) return res.status(400).send("Sem ID");
 
   try {
-    const payment = await mercadopago.payment.get(payment_id);
-    const deviceId = payment.body.external_reference;
-    const status = payment.body.status;
+    const payment = new Payment(client);
+    const result = await payment.get({ id: payment_id });
+    
+    const deviceId = result.external_reference;
+    const status = result.status;
 
     if (status === "approved" && deviceId) {
       dispositivosPagos[deviceId] = {
