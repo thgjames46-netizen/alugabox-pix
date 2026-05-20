@@ -117,6 +117,27 @@ app.get('/pagar/:deviceId', async (req, res) => {
     res.status(500).send('Erro ao gerar Pix: ' + error.message);
   }
 });
+// WEBHOOK DO MERCADO PAGO - RECEBE CONFIRMAÇÃO DE PAGAMENTO
+app.post("/webhook/pix", async (req, res) => {
+  console.log("POST /webhook/pix");
+  console.log("Webhook MP recebido:", req.body);
+  
+  const payment_id = req.body.data?.id;
+  
+  if (!payment_id) {
+    console.log("Webhook sem payment_id");
+    return res.status(400).send("Sem ID");
+  }
+
+  // MODO TESTE: Libera o TESTE123 em qualquer pagamento
+  console.log(`✓ TESTE123 liberado. Payment MP: ${payment_id}`);
+  
+  // AQUI VOCÊ VAI COLOCAR O CÓDIGO PRA LIBERAR A TV BOX
+  // Ex: await db.query("UPDATE devices SET status='pago' WHERE id='TESTE123'");
+  
+  res.status(200).send("OK");
+});
+
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
